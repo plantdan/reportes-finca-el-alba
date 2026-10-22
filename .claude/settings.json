@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /home/user/reportes-finca-el-alba status*)",
+      "Bash(git -C /home/user/reportes-finca-el-alba log *)",
+      "Bash(git -C /home/user/reportes-finca-el-alba fetch origin main)",
+      "Bash(git -C /home/user/reportes-finca-el-alba pull origin main)",
+      "Bash(git -C /home/user/reportes-finca-el-alba add *)",
+      "Bash(git -C /home/user/reportes-finca-el-alba commit *)",
+      "Bash(git -C /home/user/reportes-finca-el-alba push origin main)",
+      "Bash(git -C /home/user/reportes-finca-el-alba push -u origin main)"
+    ]
+  }
+}

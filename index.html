@@ -1,0 +1,814 @@
+<!doctype html><html><head><meta name="robots" content="noindex, nofollow"><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Reportes Diarios El Alba</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: field logbook — tabs for the week, each day and the full history; charts read as one system */
+:root{
+  --bg:#F3F6F2; --surface:#FFFFFF; --fg:#18231E; --muted:#5B6B62; --line:#D8E0DA; --grid:#E8EDE9;
+  --accent:#1E6A54; --accent-soft:#E1EFE9; --cacao:#7A3E2C;
+  --warn:#9A6400; --warn-soft:#FBF0D9; --crit:#B3261E; --crit-soft:#FBE4E2; --good:#1C7A2E;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6; --s8:#e34948;
+  --heat:42,120,214;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#111814; --surface:#18211C; --fg:#E4ECE7; --muted:#9AAAA1; --line:#2A3630; --grid:#222C27;
+  --accent:#6CC3A4; --accent-soft:#1C3329; --cacao:#D9927A;
+  --warn:#E8B04B; --warn-soft:#352A12; --crit:#F08A80; --crit-soft:#3A1C1A; --good:#5CC46E;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+  --heat:85,152,231; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#111814; --surface:#18211C; --fg:#E4ECE7; --muted:#9AAAA1; --line:#2A3630; --grid:#222C27;
+  --accent:#6CC3A4; --accent-soft:#1C3329; --cacao:#D9927A;
+  --warn:#E8B04B; --warn-soft:#352A12; --crit:#F08A80; --crit-soft:#3A1C1A; --good:#5CC46E;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+  --heat:85,152,231; color-scheme:dark }
+
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto;padding-block:28px 56px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+header.top{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:12px;
+  border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:18px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--cacao)}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(28px,4vw,40px);line-height:1.1;margin:4px 0 0;text-wrap:balance}
+.updated{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+
+/* tabs */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:24px;overflow-x:auto}
+.tab{all:unset;cursor:pointer;padding:10px 14px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tab:hover{color:var(--fg)}
+.tab[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+.tab:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+
+/* shared */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px 20px;min-width:0}
+.card h3,.label{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 12px;font-weight:500}
+.stack{display:flex;flex-direction:column;gap:20px}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+@media (max-width:860px){.two{grid-template-columns:minmax(0,1fr)}}
+.muted{color:var(--muted)}
+.scroll{overflow-x:auto}
+table.t{border-collapse:collapse;width:100%;font-size:14px}
+table.t th{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500;text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.t td{padding:7px 8px;border-bottom:1px solid var(--grid);vertical-align:top}
+table.t td.r,table.t th.r{text-align:right;font-variant-numeric:tabular-nums}
+.btn{all:unset;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:6px;padding:6px 10px;font-size:14px;line-height:1.2}
+.btn:hover{border-color:var(--accent)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.btn[disabled]{opacity:.4;cursor:default}
+select.sel{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:6px;padding:6px 8px;font:inherit;font-size:14px;max-width:100%}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);margin:0 0 10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.tip{position:fixed;z-index:30;pointer-events:none;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,.12);max-width:260px}
+.tip b{font-weight:600}
+.tip .row{display:flex;justify-content:space-between;gap:14px;font-variant-numeric:tabular-nums}
+.tip i{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:6px}
+
+/* week view */
+.weekbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px}
+.weekbar h2{font-family:var(--f-display);font-weight:700;font-size:26px;margin:0 8px 0 0;line-height:1.15}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:700px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;min-width:0}
+.kpi .v{font-family:var(--f-display);font-size:28px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi .k{font-size:13px;color:var(--muted)}
+.kpi .d{font-family:var(--f-mono);font-size:12px;margin-top:4px;color:var(--muted)}
+.d.up{color:var(--good)} .d.down{color:var(--crit)}
+.brief{border-left:3px solid var(--accent)}
+.brief p{margin:0 0 8px;max-width:72ch}
+.brief ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.brief .src{font-family:var(--f-mono);font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.hbar{display:grid;grid-template-columns:minmax(0,170px) minmax(0,1fr) 64px;align-items:center;gap:6px 10px;font-size:14px}
+.hbar .track{position:relative;height:14px}
+.hbar .fill{position:absolute;left:0;top:0;bottom:0;border-radius:0 4px 4px 0}
+.hbar .avg{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--fg);opacity:.55}
+.hbar .val{text-align:right;font-variant-numeric:tabular-nums;color:var(--fg)}
+.hbar .nm{display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hbar .nm i{width:10px;height:10px;border-radius:2px;flex:none}
+.inl{display:inline-block;height:8px;border-radius:0 3px 3px 0;background:var(--accent);vertical-align:middle;margin-right:6px}
+.pill{display:inline-block;font-size:12px;padding:1px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+
+/* chart */
+svg.chart{display:block;width:100%;height:auto;overflow:visible}
+svg.chart text{fill:var(--muted);font-family:var(--f-mono);font-size:11px}
+svg.chart .gl{stroke:var(--grid);stroke-width:1}
+svg.chart .ax{stroke:var(--line);stroke-width:1}
+svg.chart .sel{fill:var(--accent-soft)}
+.heat td.c{text-align:center;font-variant-numeric:tabular-nums;font-size:12px;min-width:44px;border:2px solid var(--surface)}
+
+/* daily view (unchanged) */
+.grid{display:grid;grid-template-columns:220px minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:760px){.grid{grid-template-columns:minmax(0,1fr)}}
+nav.days{display:flex;flex-direction:column;gap:2px;position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px)}
+nav.days h2{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;font-weight:500}
+.day-btn{all:unset;cursor:pointer;display:flex;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:6px;font-variant-numeric:tabular-nums;color:var(--fg)}
+.day-btn:hover{background:var(--accent-soft)}
+.day-btn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.day-btn[aria-current="true"]{background:var(--accent);color:var(--bg)}
+.day-btn .n{font-family:var(--f-mono);font-size:13px;opacity:.8}
+.day-btn .dot{width:8px;height:8px;border-radius:50%;background:var(--warn);align-self:center}
+.day-btn .dot.crit{background:var(--crit)}
+.day-select{display:none}
+@media (max-width:760px){
+  nav.days{position:static}
+  nav.days .list{display:none}
+  .day-select{display:block;width:100%;padding:10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg);font:inherit}
+}
+#main{min-width:0;display:flex;flex-direction:column;gap:22px}
+.day-head h2{font-family:var(--f-display);font-weight:700;font-size:28px;margin:0;line-height:1.15;text-wrap:balance}
+.day-head .meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:8px;font-family:var(--f-mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.day-head .meta b{color:var(--fg);font-weight:500}
+.summary{font-size:18px;max-width:68ch;margin:0}
+.flags{display:flex;flex-direction:column;gap:8px}
+.flag{display:flex;gap:10px;align-items:baseline;padding:10px 14px;border-radius:6px;background:var(--warn-soft);border-left:3px solid var(--warn)}
+.flag.crit{background:var(--crit-soft);border-left-color:var(--crit)}
+.flag .lvl{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--warn);flex:none}
+.flag.crit .lvl{color:var(--crit)}
+.sections{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.sec{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px 18px;min-width:0}
+.sec h3{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:0 0 8px;font-weight:500}
+.sec ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+details.entries{border-top:1px solid var(--line);padding-top:14px}
+details.entries summary{cursor:pointer;font-weight:600}
+details.entries summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.entry{padding:14px 0;border-bottom:1px solid var(--line);min-width:0}
+.entry .who{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline}
+.entry .who b{font-weight:600}
+.entry .who span{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.qa{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:4px 16px;margin-top:8px;font-size:15px}
+.qa dt{color:var(--muted)} .qa dd{margin:0;overflow-wrap:anywhere}
+@media (max-width:520px){.qa{grid-template-columns:minmax(0,1fr)} .qa dd{margin-bottom:6px}}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:28px 24px;max-width:62ch}
+.empty h2{font-family:var(--f-display);font-size:24px;margin:0 0 8px}
+.empty p{margin:0 0 8px;color:var(--muted)}
+/* daily labor sheet — mirrors the team's spreadsheet */
+.sheet{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px 18px 8px;min-width:0}
+.sheet-head{text-align:center;margin-bottom:14px}
+.sheet-head h3{font-family:var(--f-display);font-weight:700;font-size:22px;margin:0;line-height:1.2}
+.sheet-head .d{color:var(--crit);font-weight:600;font-size:16px;margin-top:2px}
+.sheet .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.lab{border-collapse:collapse;width:100%;min-width:900px;font-size:15px;font-variant-numeric:tabular-nums}
+table.lab th{background:var(--accent-soft);color:var(--fg);font-weight:600;padding:8px 8px;border:1px solid var(--line);text-align:center;line-height:1.2}
+table.lab td{padding:8px 8px;border:1px solid var(--line);vertical-align:middle;text-align:center}
+table.lab td{white-space:nowrap}
+table.lab td.l,table.lab td.notes{white-space:normal}
+table.lab td.l{text-align:left}
+table.lab td.notes{text-align:left;font-size:14px;max-width:260px}
+table.lab td.av{font-weight:600;color:#18231E}
+table.lab tfoot td{border:none;border-top:2px solid var(--fg);font-weight:700;padding-top:10px}
+table.lab tfoot td.tl{text-align:right}
+/* fronts: how much of the farm each labor has covered */
+.fronts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:16px}
+.front table.t td{white-space:nowrap}
+.front{border:1px solid var(--line);border-radius:8px;padding:14px 16px;min-width:0;background:var(--surface)}
+.front h4{font-family:var(--f-display);font-size:18px;margin:0;line-height:1.2}
+.front .hl{font-size:14px;color:var(--muted);margin:2px 0 10px}
+.farmbar{position:relative;height:10px;border-radius:5px;background:var(--grid);overflow:hidden;display:flex}
+.farmbar .b1{background:var(--good)} .farmbar .b2{background:var(--warn);opacity:.55}
+.lc.na{opacity:.55}
+.fore{font-size:13px;margin:8px 0 0;padding:8px 10px;border-radius:6px;background:var(--accent-soft)}
+.front .hl b{color:var(--fg);font-weight:600}
+.lotgrid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px;margin-bottom:10px}
+.lc{border-radius:4px;padding:4px 2px;text-align:center;font-size:11px;line-height:1.25;background:var(--grid);color:var(--muted);font-variant-numeric:tabular-nums;position:relative;overflow:hidden;min-height:34px}
+.lc b{display:block;font-size:12px;font-weight:600;color:inherit}
+.lc .bar{position:absolute;left:0;bottom:0;height:4px;background:var(--warn)}
+.lc.prog{background:var(--warn-soft);color:var(--fg)}
+.lc.done{background:var(--good);color:#fff}
+.front table.t{font-size:13px}
+.front table.t td{padding:5px 6px}
+.fkey{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted);margin:-4px 0 12px}
+.fkey i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+footer{margin-top:40px;font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion: no-preference){.fill{transition:width .25s ease}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Finca El Alba · Cutris, San Carlos</div>
+      <h1>Reportes de campo</h1>
+    </div>
+    <div class="updated" id="updated"></div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="t-dia" aria-controls="p-dia" aria-selected="true">Día a día</button>
+    <button class="tab" role="tab" id="t-semana" aria-controls="p-semana" aria-selected="false">Semana</button>
+    <button class="tab" role="tab" id="t-historico" aria-controls="p-historico" aria-selected="false">Histórico</button>
+  </div>
+
+  <section id="p-semana" role="tabpanel" aria-labelledby="t-semana" class="stack" hidden>
+    <div class="weekbar">
+      <h2 id="wkTitle">Semana</h2>
+      <button class="btn" id="wkPrev" type="button" aria-label="Semana anterior">←</button>
+      <select class="sel" id="wkSelect" aria-label="Elegir semana"></select>
+      <button class="btn" id="wkNext" type="button" aria-label="Semana siguiente">→</button>
+    </div>
+    <div class="card brief" id="wkBrief"><p class="muted">Cargando el historial…</p></div>
+    <div class="kpis" id="wkKpis"></div>
+    <div class="card">
+      <h3 id="frTitle">Frentes de trabajo · últimas 4 semanas</h3>
+      <p class="muted" style="margin:-6px 0 4px;font-size:13px">Cuánto de la finca lleva cada labor, en hectáreas. Estado de cada lote según su último reporte en el periodo. Días, jornales por ha y ha por día se calculan sobre el ciclo completo de esa labor en el lote (desde que empezó hasta que se terminó o hasta hoy). «Faltan» estima los días de trabajo que quedan al ritmo de ese lote.</p>
+      <p class="muted" style="margin:0 0 10px;font-size:13px" id="frNote"></p>
+      <div class="fkey"><span><i style="background:var(--good)"></i>Terminado</span><span><i style="background:var(--warn-soft);border:1px solid var(--warn)"></i>En curso (avance %)</span><span><i style="background:var(--grid)"></i>Sin reporte en el periodo</span></div>
+      <div class="fronts" id="wkFronts"></div>
+    </div>
+    <div class="card">
+      <h3>Ritmo por labor · mismo periodo</h3>
+      <p class="muted" style="margin:-6px 0 10px;font-size:13px">Hectáreas avanzadas = área del lote × avance reportado. Menos jornales por ha = más rápido. El lote más rápido y el más lento se comparan entre lotes con al menos 0,1 ha avanzadas.</p>
+      <div class="scroll"><table class="t" id="wkPace"></table></div>
+    </div>
+    <div class="two">
+      <div class="card">
+        <h3>Horas-persona por labor</h3>
+        <p class="muted" style="margin:-6px 0 12px;font-size:13px">La línea vertical marca el promedio de las 8 semanas anteriores.</p>
+        <div id="wkCats" class="stack" style="gap:8px"></div>
+      </div>
+      <div class="card">
+        <h3>Por lote y área</h3>
+        <div class="scroll"><table class="t" id="wkLots"></table></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Día por día</h3>
+      <div class="legend" id="wkDayLegend"></div>
+      <div id="wkDays"></div>
+    </div>
+    <div class="card">
+      <h3 id="wkActsTitle">Labores de la semana</h3>
+      <div class="scroll"><table class="t" id="wkActs"></table></div>
+    </div>
+  </section>
+
+  <section id="p-dia" role="tabpanel" aria-labelledby="t-dia">
+    <div class="grid">
+      <nav class="days" aria-label="Días">
+        <h2>Días</h2>
+        <select class="day-select" id="daySelect" aria-label="Elegir día"></select>
+        <div class="list" id="dayList"></div>
+      </nav>
+      <main id="main"></main>
+    </div>
+  </section>
+
+  <section id="p-historico" role="tabpanel" aria-labelledby="t-historico" class="stack" hidden>
+    <div class="card">
+      <h3>Horas-persona por semana</h3>
+      <p class="muted" style="margin:-6px 0 10px;font-size:13px">Toque una semana para abrir su detalle.</p>
+      <div class="legend" id="hLegend"></div>
+      <div class="scroll"><div id="hWeeks" style="min-width:640px"></div></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline">
+        <h3 style="margin:0">Dónde se trabajó: lotes × labor (horas-persona)</h3>
+        <select class="sel" id="hRange" aria-label="Periodo">
+          <option value="3">Últimos 3 meses</option>
+          <option value="6">Últimos 6 meses</option>
+          <option value="12">Últimos 12 meses</option>
+          <option value="0" selected>Todo el historial</option>
+        </select>
+      </div>
+      <div class="scroll" style="margin-top:12px"><table class="t heat" id="hHeat"></table></div>
+    </div>
+    <div class="card">
+      <h3>Resumen mensual (horas-persona)</h3>
+      <div class="scroll"><table class="t" id="hMonths"></table></div>
+    </div>
+    <p class="muted" style="font-size:13px;margin:0" id="hNote"></p>
+  </section>
+
+  <footer>Datos: formulario Reporte Diario (jul 2025 – jul 2026) y encuestas de Odoo (desde sep 2026). Las horas-persona multiplican personas por la duración de cada labor; cuando una labor cubre varios lotes se reparte en partes iguales.</footer>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script type="application/json" id="lot-areas">{"Lote 1":2.5,"Lote 2":3.7,"Lote 3":1.5,"Lote 4":1.4,"Lote 5":3.5,"Lote 6":4.8,"Lote 7":2.9,"Lote 8":1.2,"Lote 11":2.9,"Lote 12":3.5,"Lote 14":2.3,"Lote 15":0.8,"Lote 16":0.4,"Lote 17":6.8,"Lote 18":3.5}</script>
+<script type="application/json" id="report-data">{"updated":"2026-10-21T19:33:59-06:00","reports":[{"date":"2026-10-21","responseCount":6,"respondents":[],"summary":"En Lote 14 siguieron la poda (3 personas) y la repica del material vegetativo podado (3 personas), ambas con 70 % de avance. En Lote 8 la deshija de brotes patrón (5 personas) llegó a 70 % y la chapia con motoguadaña en Lote 18 (3 personas) a 75 %. Se terminó de recoger mangueras previo a la chapia en Lote 3 (3 personas, 06:00–12:00) y se empezó en Lote 2 (3 personas, 10 %).","flags":[{"level":"warn","text":"Seis correos de Odoo entre 15:54 y 16:02 llegaron vacíos, sin respuestas; no se contaron."},{"level":"warn","text":"Ningún reporte trae el nombre de quien responde («Sin nombre»); revisar que la encuesta en Odoo registre al responsable."}],"sections":[{"title":"Terminadas","items":["Lote 3 – Recoger mangueras previo a chapia (3 personas, 06:00–12:00)"]},{"title":"En curso","items":["Lote 14 – Poda: 70 % (3 personas, 06:00–14:30)","Lote 14 – Repica de material vegetativo podado: 70 % (3 personas, 06:00–14:30)","Lote 8 – Deshija de brotes patrón: 70 % (5 personas, 06:00–14:30)","Lote 18 – Chapia con motoguadaña: 75 % (3 personas, 06:00–14:30)","Lote 2 – Recoger mangueras previo a chapia: 10 % (3 personas, 12:00–14:30)"]},{"title":"Notas del equipo","items":["Ninguna labor registró notas importantes"]}],"entries":[{"who":"Sin nombre","time":"16:56","answers":[{"q":"Encuesta","a":"Reporte de Labores Diarias - Finca El Alba"},{"q":"Fecha del Reporte","a":"2026-10-21"},{"q":"Lugar donde se realizó la actividad","a":"Lote 14"},{"q":"Categoría de la labor","a":"Poda"},{"q":"Descripción de la labor","a":"Repica de material vegetativo podado"},{"q":"Número de personas en la labor","a":"3"},{"q":"Hora de inicio","a":"06:00"},{"q":"Hora de finalizado","a":"14:30"},{"q":"Avance acumulado al terminar hoy (%)","a":"70"},{"q":"¿Quedó terminada la labor en este lote?","a":"No"},{"q":"Notas importantes de la labor","a":""}]},{"who":"Sin nombre","time":"16:58","answers":[{"q":"Encuesta","a":"Reporte de Labores Diarias - Finca El Alba"},{"q":"Fecha del Reporte","a":"2026-10-21"},{"q":"Lugar donde se realizó la actividad","a":"Lote 14"},{"q":"Categoría de la labor","a":"Poda"},{"q":"Descripción de la labor","a":"Poda"},{"q":"Número de personas en la labor","a":"3"},{"q":"Hora de inicio","a":"06:00"},{"q":"Hora de finalizado","a":"14:30"},{"q":"Avance acumulado al terminar hoy (%)","a":"70"},{"q":"¿Quedó terminada la labor en este lote?","a":"No"},{"q":"Notas importantes de la labor","a":""}]},{"who":"Sin nombre","time":"17:00","answers":[{"q":"Encuesta","a":"Reporte de Labores Diarias - Finca El Alba"},{"q":"Fecha del Reporte","a":"2026-10-21"},{"q":"Lugar donde se realizó la actividad","a":"Lote 18"},{"q":"Categoría de la labor","a":"Mantenimiento de Campo"},{"q":"Descripción de la labor","a":"Chapia con motoguadaña"},{"q":"Número de personas en la labor","a":"3"},{"q":"Hora de inicio","a":"06:00"},{"q":"Hora de finalizado","a":"14:30"},{"q":"Avance acumulado al terminar hoy (%)","a":"75"},{"q":"¿Quedó terminada la labor en este lote?","a":"No"},{"q":"Notas importantes de la labor","a":""}]},{"who":"Sin nombre","time":"17:00","answers":[{"q":"Encuesta","a":"Reporte de Labores Diarias - Finca El Alba"},{"q":"Fecha del Reporte","a":"2026-10-21"},{"q":"Lugar donde se realizó la actividad","a":"Lote 8"},{"q":"Categoría de la labor","a":"Poda"},{"q":"Descripción de la labor","a":"Deshija de brotes patrón"},{"q":"Número de personas en la labor","a":"5"},{"q":"Hora de inicio","a":"06:00"},{"q":"Hora de finalizado","a":"14:30"},{"q":"Avance acumulado al terminar hoy (%)","a":"70"},{"q":"¿Quedó terminada la labor en este lote?","a":"No"},{"q":"Notas importantes de la labor","a":""}]},{"who":"Sin nombre","time":"17:00","answers":[{"q":"Encuesta","a":"Reporte de Labores Diarias - Finca El Alba"},{"q":"Fecha del Reporte","a":"2026-10-21"},{"q":"Lugar donde se realizó la actividad","a":"Lote 2"},{"q":"Categoría de la labor","a":"Riego"},{"q":"Descripción de la labor","a":"Recoger mangueras previo a chapia"},{"q":"Número de personas en la labor","a":"3"},{"q":"Hora de inicio","a":"12:00"},{"q":"Hora de finalizado","a":"14:30"},{"q":"Avance acumulado al terminar hoy (%)","a":"10"},{"q":"¿Quedó terminada la labor en este lote?","a":"No"},{"q":"Notas importantes de la labor","a":""}]},{"who":"Sin nombre","time":"17:00","answers":[{"q":"Encuesta","a":"Reporte de Labores Diarias - Finca El Alba"},{"q":"Fecha del Reporte","a":"2026-10-21"},{"q":"Lugar donde se realizó la actividad","a":"Lote 3"},{"q":"Categoría de la labor","a":"Riego"},{"q":"Descripción de la labor","a":"Recoger mangueras previo a chapia"},{"q":"Número de personas en la labor","a":"3"},{"q":"Hora de inicio","a":"06:00"},{"q":"Hora de finalizado","a":"12:00"},{"q":"Avance acumulado al terminar hoy (%)","a":"100"},{"q":"¿Quedó terminada la labor en este lote?","a":"Sí"},{"q":"Notas importantes de la labor","a":""}]}]},{"date":"2026-10-20","responseCount":6,"respondents":[],"summary":"6 labores reportadas, 144.5 horas-persona. Se terminó la deshija de brotes patrón en Lote 16 (5 personas) y la limpieza de desagües en Lote 14 (6 personas, 08:00–14:30). Poda y repica en Lote 14 de 06:00 a 08:00 (22 %), chapia con motoguadaña en Lote 18 (60 %) y recoger mangueras en Lote 3 (53 %).","flags":[{"level":"warn","text":"Dos respuestas de prueba en Odoo («vfr» en Planta de Proceso y «frr» en Lote 1, enviadas después de las 8 p. m.) se dejaron fuera; conviene borrarlas en Odoo."}],"sections":[{"title":"Terminadas","items":["Lote 16 – Deshija de brotes patrón (5 personas, 06:00–14:30)","Lote 14 – Limpieza de desagües (6 personas, 08:00–14:30)"]},{"title":"En curso","items":["Lote 14 – Poda y repica de material podado: 22 %","Lote 18 – Chapia con motoguadaña: 60 %","Lote 3 – Recoger mangueras previa chapia: 53 %"]},{"title":"Origen de los datos","items":["Cargado desde la exportación de respuestas de Odoo; no incluye el nombre de quien reporta"]}],"entries":[{"who":"Sin nombre","time":"16:53","answers":[{"q":"Encuesta","a":"Reporte de Labores Diarias - Finca El Alba"},{"q":"Fecha del Reporte","a":"2026-10-20"},{"q":"Lugar donde se realizó la actividad","a":"Lote 3"},{"q":"Categoría de la labor","a":"Riego"},{"q":"Descripción de la labor","a":"Recoger mangueras previa chapia"},{"q":"Número de personas en la labor","a":"3"},{"q":"Hora de inicio","a":"06:00"},{"q":"Hora de finalizado","a":"14:30"},{"q":"Avance acumulado al terminar hoy (%)","a":"53"},{"q":"¿Quedó terminada la labor en este lote?","a":"No"},{"q":"Notas importantes de la labor","a":""}]},{"who":"Sin nombre","time":"16:58","answers":[{"q":"Encuesta","a":"Reporte de Labores Diarias - Finca El Alba"},{"q":"Fecha del Reporte","a":"2026-10-20"},{"q":"Lugar donde se realizó la actividad","a":"Lote 16"},{"q":"Categoría de la labor","a":"Poda"},{"q":"Descripción de la labor","a":"Deshija de brotes patrón"},{"q":"Número de personas en la labor","a":"5"},{"q":"Hora de inicio","a":"06:00"},{"q":"Hora de finalizado","a":"14:30"},{"q":"Avance acumulado al terminar hoy (%)","a":"100"},{"q":"¿Quedó terminada la labor en este lote?","a":"Sí"},{"q":"Notas importantes de la labor","a":""}]},{"who":"Sin nombre","time":"17:00","answers":[{"q":"Encuesta","a":"Reporte de Labores Diarias - Finca El Alba"},{"q":"Fecha del Reporte","a":"2026-10-20"},{"q":"Lugar donde se realizó la actividad","a":"Lote 18"},{"q":"Categoría de la labor","a":"Mantenimiento de Campo"},{"q":"Descripción de la labor","a":"Chapia con motoguadaña"},{"q":"Número de personas en la labor","a":"3"},{"q":"Hora de inicio","a":"06:00"},{"q":"Hora de finalizado","a":"14:30"},{"q":"Avance acumulado al terminar hoy (%)","a":"60"},{"q":"¿Quedó terminada la labor en este lote?","a":"No"},{"q":"Notas importantes de la labor","a":""}]},{"who":"Sin nombre","time":"17:03","answers":[{"q":"Encuesta","a":"Reporte de Labores Diarias - Finca El Alba"},{"q":"Fecha del Reporte","a":"2026-10-20"},{"q":"Lugar donde se realizó la actividad","a":"Lote 14"},{"q":"Categoría de la labor","a":"Poda"},{"q":"Descripción de la labor","a":"Poda"},{"q":"Número de personas en la labor","a":"3"},{"q":"Hora de inicio","a":"06:00"},{"q":"Hora de finalizado","a":"08:00"},{"q":"Avance acumulado al terminar hoy (%)","a":"22"},{"q":"¿Quedó terminada la labor en este lote?","a":"No"},{"q":"Notas importantes de la labor","a":""}]},{"who":"Sin nombre","time":"17:05","answers":[{"q":"Encuesta","a":"Reporte de Labores Diarias - Finca El Alba"},{"q":"Fecha del Reporte","a":"2026-10-20"},{"q":"Lugar donde se realizó la actividad","a":"Lote 14"},{"q":"Categoría de la labor","a":"Poda"},{"q":"Descripción de la labor","a":"Repica de material vegetativo podado."},{"q":"Número de personas en la labor","a":"3"},{"q":"Hora de inicio","a":"06:00"},{"q":"Hora de finalizado","a":"08:00"},{"q":"Avance acumulado al terminar hoy (%)","a":"22"},{"q":"¿Quedó terminada la labor en este lote?","a":"No"},{"q":"Notas importantes de la labor","a":""}]},{"who":"Sin nombre","time":"17:07","answers":[{"q":"Encuesta","a":"Reporte de Labores Diarias - Finca El Alba"},{"q":"Fecha del Reporte","a":"2026-10-20"},{"q":"Lugar donde se realizó la actividad","a":"Lote 14"},{"q":"Categoría de la labor","a":"Mantenimiento General"},{"q":"Descripción de la labor","a":"Limpieza de desagues"},{"q":"Número de personas en la labor","a":"6"},{"q":"Hora de inicio","a":"08:00"},{"q":"Hora de finalizado","a":"14:30"},{"q":"Avance acumulado al terminar hoy (%)","a":"100"},{"q":"¿Quedó terminada la labor en este lote?","a":"Sí"},{"q":"Notas importantes de la labor","a":""}]}]},{"date":"2026-10-19","responseCount":7,"respondents":[],"summary":"7 labores reportadas, 136.0 horas-persona. Poda en Lote 14 (poda con 2 personas y repica con 3, 20 % de avance) y deshija de brotes patrón en Lote 16 (5 personas, 40 %); chapia con motoguadaña en Lote 18 (3 personas, 48 %). Se terminó de recoger mangueras en Lote 4 y de soltar injertos del plástico en Lote 11; en Lote 3 se empezó a recoger mangueras (13 %).","flags":[],"sections":[{"title":"Terminadas","items":["Lote 4 – Recoger mangueras de riego previa chapia (3 personas, 06:00–10:00)","Lote 11 – Soltar injertos del plástico (3 personas, 10:00–12:00)"]},{"title":"En curso","items":["Lote 14 – Poda y repica de material podado: 20 %","Lote 16 – Deshija de brotes patrón: 40 %","Lote 18 – Chapia con motoguadaña: 48 %","Lote 3 – Recoger mangueras de riego: 13 %"]},{"title":"Origen de los datos","items":["Cargado desde la exportación de respuestas de Odoo; no incluye el nombre de quien reporta"]}],"entries":[{"who":"Sin nombre","time":"15:27","answers":[{"q":"Encuesta","a":"Reporte de Labores Diarias - Finca El Alba"},{"q":"Fecha del Reporte","a":"2026-10-19"},{"q":"Lugar donde se realizó la actividad","a":"Lote 4"},{"q":"Categoría de la labor","a":"Riego"},{"q":"Descripción de la labor","a":"Recoger mangueras de riego previa chapia"},{"q":"Número de personas en la labor","a":"3"},{"q":"Hora de inicio","a":"06:00"},{"q":"Hora de finalizado","a":"10:00"},{"q":"Avance acumulado al terminar hoy (%)","a":"100"},{"q":"¿Quedó terminada la labor en este lote?","a":"Sí"},{"q":"Notas importantes de la labor","a":""}]},{"who":"Sin nombre","time":"15:29","answers":[{"q":"Encuesta","a":"Reporte de Labores Diarias - Finca El Alba"},{"q":"Fecha del Reporte","a":"2026-10-19"},{"q":"Lugar donde se realizó la actividad","a":"Lote 11"},{"q":"Categoría de la labor","a":"Siembra"},{"q":"Descripción de la labor","a":"Soltar injertos del plástico"},{"q":"Número de personas en la labor","a":"3"},{"q":"Hora de inicio","a":"10:00"},{"q":"Hora de finalizado","a":"12:00"},{"q":"Avance acumulado al terminar hoy (%)","a":"100"},{"q":"¿Quedó terminada la labor en este lote?","a":"Sí"},{"q":"Notas importantes de la labor","a":""}]},{"who":"Sin nombre","time":"15:32","answers":[{"q":"Encuesta","a":"Reporte de Labores Diarias - Finca El Alba"},{"q":"Fecha del Reporte","a":"2026-10-19"},{"q":"Lugar donde se realizó la actividad","a":"Lote 3"},{"q":"Categoría de la labor","a":"Riego"},{"q":"Descripción de la labor","a":"Recoger mangueras de riego"},{"q":"Número de personas en la labor","a":"3"},{"q":"Hora de inicio","a":"12:00"},{"q":"Hora de finalizado","a":"14:30"},{"q":"Avance acumulado al terminar hoy (%)","a":"13"},{"q":"¿Quedó terminada la labor en este lote?","a":"No"},{"q":"Notas importantes de la labor","a":""}]},{"who":"Sin nombre","time":"15:33","answers":[{"q":"Encuesta","a":"Reporte de Labores Diarias - Finca El Alba"},{"q":"Fecha del Reporte","a":"2026-10-19"},{"q":"Lugar donde se realizó la actividad","a":"Lote 16"},{"q":"Categoría de la labor","a":"Poda"},{"q":"Descripción de la labor","a":"Deshija de brotes patrón"},{"q":"Número de personas en la labor","a":"5"},{"q":"Hora de inicio","a":"06:00"},{"q":"Hora de finalizado","a":"14:30"},{"q":"Avance acumulado al terminar hoy (%)","a":"40"},{"q":"¿Quedó terminada la labor en este lote?","a":"No"},{"q":"Notas importantes de la labor","a":""}]},{"who":"Sin nombre","time":"15:35","answers":[{"q":"Encuesta","a":"Reporte de Labores Diarias - Finca El Alba"},{"q":"Fecha del Reporte","a":"2026-10-19"},{"q":"Lugar donde se realizó la actividad","a":"Lote 18"},{"q":"Categoría de la labor","a":"Mantenimiento de Campo"},{"q":"Descripción de la labor","a":"Chapia con motoguadaña"},{"q":"Número de personas en la labor","a":"3"},{"q":"Hora de inicio","a":"06:00"},{"q":"Hora de finalizado","a":"14:30"},{"q":"Avance acumulado al terminar hoy (%)","a":"48"},{"q":"¿Quedó terminada la labor en este lote?","a":"No"},{"q":"Notas importantes de la labor","a":""}]},{"who":"Sin nombre","time":"15:36","answers":[{"q":"Encuesta","a":"Reporte de Labores Diarias - Finca El Alba"},{"q":"Fecha del Reporte","a":"2026-10-19"},{"q":"Lugar donde se realizó la actividad","a":"Lote 14"},{"q":"Categoría de la labor","a":"Poda"},{"q":"Descripción de la labor","a":"Poda"},{"q":"Número de personas en la labor","a":"2"},{"q":"Hora de inicio","a":"06:00"},{"q":"Hora de finalizado","a":"14:30"},{"q":"Avance acumulado al terminar hoy (%)","a":"20"},{"q":"¿Quedó terminada la labor en este lote?","a":"No"},{"q":"Notas importantes de la labor","a":""}]},{"who":"Sin nombre","time":"15:38","answers":[{"q":"Encuesta","a":"Reporte de Labores Diarias - Finca El Alba"},{"q":"Fecha del Reporte","a":"2026-10-19"},{"q":"Lugar donde se realizó la actividad","a":"Lote 14"},{"q":"Categoría de la labor","a":"Poda"},{"q":"Descripción de la labor","a":"Repica de material vegetativo podado"},{"q":"Número de personas en la labor","a":"3"},{"q":"Hora de inicio","a":"06:00"},{"q":"Hora de finalizado","a":"14:30"},{"q":"Avance acumulado al terminar hoy (%)","a":"20"},{"q":"¿Quedó terminada la labor en este lote?","a":"No"},{"q":"Notas importantes de la labor","a":""}]}]}]}</script>
+
+<script>
+/* ---------- shared helpers ---------- */
+var MESES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+var DIAS=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+var DIAS_C=['dom','lun','mar','mié','jue','vie','sáb'];
+function parse(d){var p=d.split('-');return new Date(+p[0],+p[1]-1,+p[2])}
+function iso(x){return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')}
+function shortDate(d){var x=parse(d);return x.getDate()+' '+MESES[x.getMonth()]}
+function longDate(d){var x=parse(d);var s=DIAS[x.getDay()]+' '+x.getDate()+' de '+MESES[x.getMonth()]+' '+x.getFullYear();return s.charAt(0).toUpperCase()+s.slice(1)}
+function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e}
+function fmt(n){return n==null?'—':Math.round(n).toLocaleString('es-CR')}
+var NS='http://www.w3.org/2000/svg';
+function sv(tag,attrs){var e=document.createElementNS(NS,tag);for(var k in attrs)e.setAttribute(k,attrs[k]);return e}
+
+/* ---------- tabs ---------- */
+(function(){
+  var tabs=['semana','dia','historico'];
+  function open(name){
+    tabs.forEach(function(t){
+      document.getElementById('t-'+t).setAttribute('aria-selected',t===name?'true':'false');
+      document.getElementById('p-'+t).hidden=(t!==name);
+    });
+    window.dispatchEvent(new CustomEvent('tabopen',{detail:name}));
+  }
+  tabs.forEach(function(t){document.getElementById('t-'+t).addEventListener('click',function(){open(t)})});
+  window.openTab=open;
+  var h=(location.hash||'').slice(1);
+  if(h==='semana') open('semana');
+  else if(h==='historico') open('historico');
+  else open('dia');
+})();
+
+/* ---------- daily reports (written by the daily task) ---------- */
+(function(){
+  var data;
+  try{ data = JSON.parse(document.getElementById('report-data').textContent) }catch(e){ data={updated:null,reports:[]} }
+  var reports = (data.reports||[]).slice().sort(function(a,b){return a.date<b.date?1:-1});
+  function num(v){if(v==null||v==='')return null;var n=parseFloat(String(v).replace(',','.'));return isNaN(n)?null:n}
+  function mins(t){var m=/^(\d{1,2}):(\d{2})/.exec(String(t||''));return m?(+m[1])*60+(+m[2]):null}
+  function hm12(t){var m=mins(t);if(m==null)return t||'';var h=Math.floor(m/60),mm=m%60;var ap=h>=12?'p.m.':'a.m.';var h12=h%12||12;return h12+':'+String(mm).padStart(2,'0')+' '+ap}
+  function avColor(v){var p=Math.max(0,Math.min(100,v))/100;var stops=[[0,[230,115,115]],[0.4,[238,170,120]],[0.6,[240,200,130]],[0.8,[200,220,135]],[1,[120,190,125]]];for(var i=1;i<stops.length;i++){if(p<=stops[i][0]){var a=stops[i-1],b=stops[i],f=(p-a[0])/(b[0]-a[0]);return 'rgb('+a[1].map(function(c,j){return Math.round(c+(b[1][j]-c)*f)}).join(',')+')'}}return 'rgb(120,190,125)'}
+  function laborRows(r){
+    if(r.labores&&r.labores.length) return r.labores.map(function(x){var o=Object.assign({},x);if(o.horas==null&&o.pp!=null){var a=mins(o.ini),b=mins(o.fin);if(a!=null&&b!=null&&b>a)o.horas=o.pp*(b-a)/60}return o});
+    var out=[];
+    (r.entries||[]).forEach(function(e){
+      var A={}; (e.answers||[]).forEach(function(a){A[String(a.q||'').toLowerCase()]=a.a});
+      function get(re){for(var k in A){if(re.test(k))return A[k]}return ''}
+      var desc=get(/descripci/), cat=get(/categor/);
+      if(!desc&&!cat) return;
+      var pp=num(get(/personas/)), ini=get(/inicio/), fin=get(/finaliz|final/);
+      var a=mins(ini), b=mins(fin), horas=(pp!=null&&a!=null&&b!=null&&b>a)?pp*(b-a)/60:null;
+      out.push({desc:desc,cat:cat,lugar:get(/lugar/),pp:pp,ini:ini,fin:fin,horas:horas,av:num(get(/avance/)),term:get(/terminad/),notas:get(/notas/)});
+    });
+    return out;
+  }
+  window.dailyActivities=function(){var out=[];(data.reports||[]).forEach(function(r){laborRows(r).forEach(function(x){
+    var a=mins(x.ini),b=mins(x.fin),hrs=(a!=null&&b!=null&&b>a)?(b-a)/60:null;
+    out.push({date:r.date,category:x.cat||'',description:x.desc||'',places:x.lugar||'',people:x.pp,start:x.ini||'',end:x.fin||'',hours:hrs,person_hours:x.horas,progress:x.av,finished:/^s/i.test(x.term||'')?true:(x.term?false:null),notes:x.notas||'',source:'diario',flags:''})})});return out};
+  function worst(r){var f=r.flags||[];if(f.some(function(x){return x.level==='crit'}))return 'crit';return f.length?'warn':''}
+  var upd=document.getElementById('updated');
+  if(data.updated){var u=new Date(data.updated);upd.textContent='Actualizado '+u.getDate()+' '+MESES[u.getMonth()]+' · '+String(u.getHours()).padStart(2,'0')+':'+String(u.getMinutes()).padStart(2,'0')}
+  var main=document.getElementById('main'), list=document.getElementById('dayList'), sel=document.getElementById('daySelect');
+  if(!reports.length){
+    var em=el('div','empty');
+    em.appendChild(el('h2',null,'Todavía no hay reportes'));
+    em.appendChild(el('p',null,'Cada noche aparecerá aquí el resumen del día: actividades por lote, cosecha, incidentes y pendientes.'));
+    main.appendChild(em); sel.hidden=true; return;
+  }
+  reports.forEach(function(r){
+    var b=el('button','day-btn'); b.type='button'; b.dataset.date=r.date;
+    b.appendChild(el('span',null,shortDate(r.date)));
+    var right=el('span'); right.style.display='flex'; right.style.gap='8px';
+    var w=worst(r); if(w){var d=el('span','dot'+(w==='crit'?' crit':'')); d.title='Tiene alertas'; right.appendChild(d)}
+    right.appendChild(el('span','n',String(r.responseCount||0)));
+    b.appendChild(right);
+    b.addEventListener('click',function(){show(r.date)});
+    list.appendChild(b);
+    var o=el('option',null,shortDate(r.date)+' · '+(r.responseCount||0)+' resp.'); o.value=r.date; sel.appendChild(o);
+  });
+  sel.addEventListener('change',function(){show(sel.value)});
+  function show(date){
+    var r=reports.find(function(x){return x.date===date})||reports[0];
+    Array.prototype.forEach.call(list.children,function(b){b.setAttribute('aria-current',b.dataset.date===r.date?'true':'false')});
+    sel.value=r.date;
+    main.textContent='';
+    var head=el('div','day-head');
+    head.appendChild(el('h2',null,longDate(r.date)));
+    var meta=el('div','meta');
+    function m(label,val){var s=el('span');s.appendChild(document.createTextNode(label+' '));s.appendChild(el('b',null,val));meta.appendChild(s)}
+    m('Respuestas',String(r.responseCount||0));
+    if(r.respondents&&r.respondents.length) m('Reportaron',r.respondents.join(', '));
+    if(r.missing&&r.missing.length) m('Sin reporte',r.missing.join(', '));
+    head.appendChild(meta); main.appendChild(head);
+    var labs=laborRows(r);
+    if(labs.length){
+      var sh=el('div','sheet'); var hd=el('div','sheet-head');
+      hd.appendChild(el('h3',null,'Labores Finca El Alba'));
+      hd.appendChild(el('div','d',longDate(r.date).replace(' de oct ',' de octubre ')));
+      sh.appendChild(hd);
+      var sc=el('div','scroll'); var t=el('table','lab');
+      var th=el('thead'); var trh=el('tr');
+      ['Descripción','Categoría','Lugar','pp','Inicio','Final','Horas','Avance (%)','¿Terminada?','Notas importantes de la labor'].forEach(function(c){trh.appendChild(el('th',null,c))});
+      th.appendChild(trh); t.appendChild(th);
+      var tb=el('tbody'), tot=0, anyH=false;
+      labs.forEach(function(x){
+        var tr=el('tr');
+        tr.appendChild(el('td','l',x.desc));
+        tr.appendChild(el('td',null,x.cat));
+        tr.appendChild(el('td',null,x.lugar));
+        tr.appendChild(el('td',null,x.pp==null?'':String(x.pp)));
+        tr.appendChild(el('td',null,hm12(x.ini)));
+        tr.appendChild(el('td',null,hm12(x.fin)));
+        tr.appendChild(el('td',null,x.horas==null?'':x.horas.toFixed(1)));
+        var av=el('td','av',x.av==null?'':Math.round(x.av)+'%'); if(x.av!=null) av.style.background=avColor(x.av); tr.appendChild(av);
+        tr.appendChild(el('td',null,x.term));
+        tr.appendChild(el('td','notes',x.notas));
+        if(x.horas!=null){tot+=x.horas;anyH=true}
+        tb.appendChild(tr);
+      });
+      t.appendChild(tb);
+      if(anyH){var tf=el('tfoot'),tr2=el('tr');var a=el('td','tl','Total horas (persona-hora)');a.colSpan=6;tr2.appendChild(a);tr2.appendChild(el('td',null,tot.toFixed(1)));var b=el('td');b.colSpan=3;tr2.appendChild(b);tf.appendChild(tr2);t.appendChild(tf)}
+      sc.appendChild(t); sh.appendChild(sc); main.appendChild(sh);
+    }
+    if(r.summary) main.appendChild(el('p','summary',r.summary));
+    if(r.flags&&r.flags.length){
+      var fl=el('div','flags');
+      r.flags.forEach(function(f){var x=el('div','flag'+(f.level==='crit'?' crit':''));x.appendChild(el('span','lvl',f.level==='crit'?'Urgente':'Atención'));x.appendChild(el('span',null,f.text));fl.appendChild(x)});
+      main.appendChild(fl);
+    }
+    if(r.sections&&r.sections.length){
+      var g=el('div','sections');
+      r.sections.forEach(function(s){var c=el('section','sec');c.appendChild(el('h3',null,s.title));var ul=el('ul');(s.items||[]).forEach(function(i){ul.appendChild(el('li',null,i))});c.appendChild(ul);g.appendChild(c)});
+      main.appendChild(g);
+    }
+    if(r.entries&&r.entries.length){
+      var det=el('details','entries');
+      det.appendChild(el('summary',null,'Respuestas individuales ('+r.entries.length+')'));
+      r.entries.forEach(function(e){
+        var en=el('div','entry'); var who=el('div','who');
+        who.appendChild(el('b',null,e.who||'Sin nombre'));
+        if(e.time) who.appendChild(el('span',null,e.time));
+        en.appendChild(who);
+        var dl=el('dl','qa');
+        (e.answers||[]).forEach(function(a){dl.appendChild(el('dt',null,a.q));dl.appendChild(el('dd',null,a.a))});
+        en.appendChild(dl); det.appendChild(en);
+      });
+      main.appendChild(det);
+    }
+  }
+  var h=(location.hash||'').replace('#d','');
+  show(/^\d{4}-\d{2}-\d{2}$/.test(h)?h:reports[0].date);
+})();
+
+/* ---------- history: weekly and historical views ---------- */
+(function(){
+  var GROUPS=[
+    {k:'proc',n:'Procesamiento',c:'var(--s1)',cats:['Procesamiento de cacao','Compra de cacao en baba']},
+    {k:'poda',n:'Poda',c:'var(--s2)',cats:['Poda']},
+    {k:'siem',n:'Siembra y vivero',c:'var(--s3)',cats:['Siembra','Vivero','Vainilla']},
+    {k:'cos',n:'Cosecha',c:'var(--s4)',cats:['Cosecha']},
+    {k:'fert',n:'Fertilización y plagas',c:'var(--s5)',cats:['Fertilización','Control de plagas']},
+    {k:'rieg',n:'Riego',c:'var(--s6)',cats:['Riego']},
+    {k:'mant',n:'Mantenimiento',c:'var(--s7)',cats:['Mantenimiento de campo','Mantenimiento general','Construcción']},
+    {k:'otro',n:'Supervisión y otros',c:'var(--s8)',cats:['Supervisión','Transporte y diligencias','Otros']}
+  ];
+  var G={}; GROUPS.forEach(function(g,i){g.i=i;g.cats.forEach(function(c){G[c]=g})});
+  function grp(cat){return G[cat]||GROUPS[7]}
+  var tip=document.getElementById('tip');
+  function showTip(evt,html){tip.innerHTML=html;tip.hidden=false;var x=evt.clientX+14,y=evt.clientY+14;var w=tip.offsetWidth,h=tip.offsetHeight;if(x+w>innerWidth-8)x=evt.clientX-w-14;if(y+h>innerHeight-8)y=evt.clientY-h-14;tip.style.left=x+'px';tip.style.top=y+'px'}
+  function hideTip(){tip.hidden=true}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+
+  function monday(d){var x=parse(d);var wd=(x.getDay()+6)%7;x.setDate(x.getDate()-wd);return iso(x)}
+  function addDays(d,n){var x=parse(d);x.setDate(x.getDate()+n);return iso(x)}
+  function weekLabel(w){var a=parse(w),b=parse(addDays(w,5));return a.getDate()+(a.getMonth()!==b.getMonth()?' '+MESES[a.getMonth()]:'')+'–'+b.getDate()+' '+MESES[b.getMonth()]+' '+b.getFullYear()}
+
+  var H=null, ACTS=[], DAYS={}, BRIEFS={}, WEEKS=[], WK={}, curWeek=null, DAILY_DAYS={};
+
+  function load(){
+    fetch('historial.json',{cache:'no-cache'}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()}).then(function(j){
+      H=j; prepare(); renderWeek(WEEKS[WEEKS.length-1]); renderHistory();
+    }).catch(function(){
+      document.getElementById('wkBrief').innerHTML='<p>No se pudo cargar el historial. Recargue la página en un momento.</p>';
+    });
+  }
+
+  function prepare(){
+    var F=H.fields, ix={}; F.forEach(function(f,i){ix[f]=i});
+    ACTS=H.activities.map(function(r){
+      var o={}; F.forEach(function(f,i){o[f]=r[i]}); o.g=grp(o.category);
+      o.lots=(o.places||'').split('; ').filter(Boolean); return o;
+    });
+    // add days captured by the nightly report that the history file doesn't have yet
+    var have={}, canon={}; ACTS.forEach(function(a){have[a.date]=1;canon[String(a.category).toLowerCase()]=a.category;(a.lots||[]).forEach(function(l){canon['@'+l.toLowerCase()]=l})});
+    var extra=(window.dailyActivities?window.dailyActivities():[]).filter(function(a){return !have[a.date]});
+    extra.forEach(function(a){a.category=canon[a.category.toLowerCase()]||a.category;a.places=canon['@'+a.places.toLowerCase()]||a.places;a.g=grp(a.category);a.lots=a.places?[a.places]:[];});
+    ACTS=ACTS.concat(extra).sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0});
+    DAILY_DAYS={}; extra.forEach(function(a){DAILY_DAYS[a.date]=1});
+    (H.days||[]).forEach(function(d){DAYS[d[0]]={workers:d[1],notes:d[2]}});
+    (H.briefs||[]).forEach(function(b){BRIEFS[b.week]=b});
+    ACTS.forEach(function(a){
+      var w=monday(a.date); var W=WK[w]||(WK[w]={week:w,ph:0,acts:[],byG:new Array(8).fill(0),days:{},lots:{}});
+      W.acts.push(a); W.days[a.date]=1;
+      var ph=a.person_hours||0; W.ph+=ph; W.byG[a.g.i]+=ph;
+      var places=a.lots.length?a.lots:['Sin lugar'];
+      places.forEach(function(p){var L=W.lots[p]||(W.lots[p]={ph:0,byG:new Array(8).fill(0)});L.ph+=ph/places.length;L.byG[a.g.i]+=ph/places.length});
+    });
+    // continuous list of weeks from first to last
+    var keys=Object.keys(WK).sort(); var w=keys[0], last=keys[keys.length-1];
+    while(w<=last){ if(!WK[w]) WK[w]={week:w,ph:0,acts:[],byG:new Array(8).fill(0),days:{},lots:{}}; WEEKS.push(w); w=addDays(w,7); }
+    var s=document.getElementById('wkSelect'); s.textContent='';
+    WEEKS.slice().reverse().forEach(function(w){var o=el('option',null,weekLabel(w)+(WK[w].acts.length?'':' · sin datos'));o.value=w;s.appendChild(o)});
+    s.addEventListener('change',function(){renderWeek(s.value)});
+    document.getElementById('wkPrev').addEventListener('click',function(){var i=WEEKS.indexOf(curWeek);if(i>0)renderWeek(WEEKS[i-1])});
+    document.getElementById('wkNext').addEventListener('click',function(){var i=WEEKS.indexOf(curWeek);if(i<WEEKS.length-1)renderWeek(WEEKS[i+1])});
+  }
+
+  function avgWorkers(W){var v=Object.keys(W.days).map(function(d){return DAYS[d]&&DAYS[d].workers}).filter(function(x){return x});return v.length?v.reduce(function(a,b){return a+b},0)/v.length:null}
+
+  function prevAvg(w,n){var i=WEEKS.indexOf(w);var sl=WEEKS.slice(Math.max(0,i-n),i).map(function(k){return WK[k]}).filter(function(W){return W.acts.length});if(!sl.length)return null;var byG=new Array(8).fill(0),ph=0;sl.forEach(function(W){ph+=W.ph;W.byG.forEach(function(v,j){byG[j]+=v})});return{ph:ph/sl.length,byG:byG.map(function(v){return v/sl.length}),n:sl.length}}
+
+  function todayIso(){return iso(new Date())}
+  function isCurrent(w){var t=todayIso();return t>=w&&t<=addDays(w,6)}
+  function perDay(w,n){var i=WEEKS.indexOf(w);var ph=0,d=0;WEEKS.slice(Math.max(0,i-n),i).forEach(function(k){var W=WK[k];ph+=W.ph;d+=Object.keys(W.days).length});return d?ph/d:null}
+  function autoBrief(W,P){
+    if(!W.acts.length) return {summary:'No hay reportes registrados para esta semana.',bullets:[]};
+    var order=W.byG.map(function(v,i){return[i,v]}).sort(function(a,b){return b[1]-a[1]});
+    var top=order.filter(function(x){return x[1]>0}).slice(0,3).map(function(x){return GROUPS[x[0]].n.toLowerCase()+' ('+Math.round(x[1]/W.ph*100)+'%)'});
+    var nd0=Object.keys(W.days).length;var s='Se '+(nd0===1?'reportó 1 día':'reportaron '+nd0+' días')+' y '+fmt(W.ph)+' horas-persona. Las labores principales fueron '+top.join(', ')+'.';
+    var b=[];
+    if(isCurrent(W.week)&&P&&P.ph){var nd=Object.keys(W.days).length,pd=perDay(W.week,8);
+      if(pd){var d2=(W.ph/nd-pd)/pd*100;b.push('Semana en curso: '+fmt(W.ph/nd)+' horas-persona por día reportado, '+(Math.round(d2)===0?'igual que el':Math.abs(Math.round(d2))+'% '+(d2>=0?'más':'menos')+' que el')+' promedio diario de las 8 semanas anteriores ('+fmt(pd)+').')}}
+    else if(P&&P.ph){var d=(W.ph-P.ph)/P.ph*100;b.push((d>=0?'Un ':'Un ')+Math.abs(Math.round(d))+'% '+(d>=0?'más':'menos')+' de horas-persona que el promedio de las '+P.n+' semanas anteriores.')}
+    var lots=Object.keys(W.lots).filter(function(l){return /^Lote/.test(l)}).sort(function(a,b){return W.lots[b].ph-W.lots[a].ph});
+    if(lots.length)b.push('Lotes con más trabajo: '+lots.slice(0,3).map(function(l){return l+' ('+fmt(W.lots[l].ph)+' h-p)'}).join(', ')+'.');
+    var fl=W.acts.filter(function(a){return a.flags}).length; if(fl)b.push(fl+' labor(es) con datos para revisar.');
+    return {summary:s,bullets:b};
+  }
+
+
+  var FRONTS=[
+    {k:'poda',farm:true,n:'Poda',t:function(d,c){return /poda/.test(d)&&!/repica|reica|deshija/.test(d)&&c==='poda'}},
+    {k:'repica',farm:true,n:'Repica de material podado',t:function(d){return /repica|reica|re.ica de material/.test(d)}},
+    {k:'deshija',farm:true,n:'Deshija de brotes',t:function(d){return /deshija/.test(d)}},
+    {k:'mang',farm:true,n:'Recoger mangueras de riego',t:function(d){return /manguera/.test(d)&&!/proteger/.test(d)}},
+    {k:'chapia',farm:true,n:'Chapia',t:function(d,c){return /chapi|chapea/.test(d)&&c!=='siembra'}},
+    {k:'encal',farm:true,n:'Encalado',t:function(d){return /encal|carbonato/.test(d)}},
+    {k:'hoyado',n:'Hoyado para siembra',t:function(d){return /hoya/.test(d)}},
+    {k:'mader',n:'Siembra de maderables',t:function(d){return /maderable/.test(d)}},
+    {k:'injer',n:'Injertación',t:function(d){return /injert(a|o|ando|acion)/.test(d)&&!/soltar|soltando|arbolitos|descabez/.test(d)}}
+  ];
+  function norm(x){return String(x||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')}
+  function frontOf(a){var d=norm(a.description),c=norm(a.category);for(var i=0;i<FRONTS.length;i++){if(FRONTS[i].t(d,c))return FRONTS[i]}return null}
+  var AREAS=(function(){try{return JSON.parse(document.getElementById('lot-areas').textContent)}catch(e){return {}}})();
+  var ALL_LOTS=null, JORNAL=8;
+  function ha(l){return AREAS[l]!=null?+AREAS[l]:null}
+  function f1(x){return x==null?'—':(Math.round(x*10)/10).toLocaleString('es-CR',{minimumFractionDigits:1,maximumFractionDigits:1})}
+  function f2(x){return x==null?'—':(Math.round(x*100)/100).toLocaleString('es-CR',{minimumFractionDigits:2,maximumFractionDigits:2})}
+  // split every lot's history of one labor into work cycles: a cycle ends when the lot is reported finished,
+  // or when progress drops sharply (a new round started without the previous one being closed)
+  function cyclesFor(fk,lot,to){
+    var recs=ACTS.filter(function(a){return a.date<=to&&a.lots.indexOf(lot)>=0&&a._f&&a._f.k===fk&&(a.progress!=null||a.finished!=null)}).sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0});
+    var out=[],c=null,lastP=null;
+    recs.forEach(function(a){
+      var p=a.progress;
+      if(c&&p!=null&&lastP!=null&&p<lastP-30){c=null}
+      if(c&&(parse(a.date)-parse(c.end))/864e5>21){c=null}
+      if(!c){c={recs:[],ph:0,days:{},pEnd:null,done:false,start:a.date};out.push(c);lastP=null}
+      var share=(a.person_hours||0)/a.lots.length;
+      c.recs.push(a);c.ph+=share;c.days[a.date]=1;c.end=a.date;
+      if(p!=null){c.pEnd=p;lastP=p}
+      if(a.finished===true||(p!=null&&p>=100)){c.done=true;c.pEnd=100;c=null;lastP=null}
+    });
+    out.forEach(function(c){var A=ha(lot);c.nd=Object.keys(c.days).length;c.adv=(A!=null&&c.pEnd!=null)?A*c.pEnd/100:null;
+      c.hpha=(c.adv&&c.adv>0)?c.ph/c.adv:null; c.hapd=(c.adv!=null&&c.nd)?c.adv/c.nd:null});
+    return out;
+  }
+  function renderFronts(w){
+    if(!ALL_LOTS){var L={};ACTS.forEach(function(a){a._f=frontOf(a);a.lots.forEach(function(l){if(/^Lote \d+$/.test(l))L[l]=1})});Object.keys(AREAS).forEach(function(l){L[l]=1});ALL_LOTS=Object.keys(L).sort(function(a,b){return +a.split(' ')[1]-+b.split(' ')[1]})}
+    var TOT=ALL_LOTS.reduce(function(s,l){return s+(ha(l)||0)},0);
+    var noArea=ALL_LOTS.filter(function(l){return ha(l)==null});
+    var from=addDays(w,-21), to=addDays(w,6);
+    document.getElementById('frTitle').textContent='Frentes de trabajo · '+shortDate(from)+' – '+shortDate(addDays(w,5))+' '+addDays(w,5).slice(0,4);
+    document.getElementById('frNote').textContent='Finca: '+f1(TOT)+' ha en '+(ALL_LOTS.length-noArea.length)+' lotes'+(noArea.length?' ('+noArea.join(', ')+' sin área registrada, no cuenta en los totales)':'')+'. Un jornal = '+JORNAL+' horas-persona.';
+    var box=document.getElementById('wkFronts'); box.textContent='';
+    var pace=[];
+    FRONTS.forEach(function(f){
+      var other=0, touched=false;
+      ACTS.forEach(function(a){if(a.date<from||a.date>to||!a._f||a._f.k!==f.k)return;touched=true;if(!a.lots.some(function(l){return /^Lote \d+$/.test(l)}))other+=a.person_hours||0});
+      if(!touched)return;
+      var rows=[];
+      ALL_LOTS.forEach(function(l){var cs=cyclesFor(f.k,l,to).filter(function(c){return c.end>=from});if(!cs.length)return;
+        var c=cs[cs.length-1]; rows.push({l:l,A:ha(l),c:c,prev:cs.length>1?cs[cs.length-2]:null,all:cs})});
+      if(!rows.length&&other<1)return;
+      var doneHa=0,eqHa=0,phAll=0,advAll=0,doneN=0,progN=0;
+      var dAll=0;
+      function solid(c){return c.adv!=null&&c.adv>0&&(c.done||((c.pEnd||0)>=25&&c.nd>=2))}
+      rows.forEach(function(r){var A=r.A||0;if(r.c.done){doneHa+=A;doneN++}else progN++;eqHa+=A*(r.c.pEnd||0)/100;
+        r.all.forEach(function(c){if(solid(c)){phAll+=c.ph;advAll+=c.adv;dAll+=c.nd}})});
+      var hapdAvg=dAll?advAll/dAll:null;
+      var hpha=advAll>0?phAll/advAll:null;
+      // per-lot speed and forecast
+      rows.forEach(function(r){var c=r.c;r.hpha=c.hpha;r.hapd=c.hapd;
+        r.solid=solid(c);
+        if(!c.done&&r.A!=null){var rem=r.A*(100-(c.pEnd||0))/100;var own=r.solid?c.hapd:null;var rate=own||hapdAvg;
+          r.left=rate?Math.max(1,Math.ceil(rem/rate)):null; r.est=!own&&rate}});
+      pace.push({f:f,hpha:hpha,adv:advAll,ph:phAll,rows:rows.filter(function(r){return r.solid&&r.c.adv>=0.1})});
+      var card=el('div','front');card.appendChild(el('h4',null,f.n));
+      var hl=el('div','hl');
+      hl.innerHTML='<b>'+f1(doneHa)+' de '+f1(TOT)+' ha</b> terminadas ('+Math.round(doneHa/TOT*100)+'%) · '+doneN+' lote'+(doneN===1?'':'s')+' terminado'+(doneN===1?'':'s')+', '+progN+' en curso';
+      card.appendChild(hl);
+      var bar=el('div','farmbar');var b1=el('div','b1');b1.style.width=(doneHa/TOT*100)+'%';var b2=el('div','b2');b2.style.width=((eqHa-doneHa)/TOT*100)+'%';bar.appendChild(b1);bar.appendChild(b2);card.appendChild(bar);
+      var sub=el('div','hl');sub.style.marginTop='4px';
+      sub.textContent='Avance equivalente '+f1(eqHa)+' ha ('+Math.round(eqHa/TOT*100)+'%)'+(hpha?' · ritmo '+f1(hpha/JORNAL)+' jornales por ha':'');
+      card.appendChild(sub);
+      var g=el('div','lotgrid');
+      ALL_LOTS.forEach(function(l){var r=rows.find(function(x){return x.l===l});var n=l.split(' ')[1];var A=ha(l);
+        var cell=el('div','lc'+(r?(r.c.done?' done':' prog'):'')+(A==null?' na':''));
+        cell.appendChild(el('b',null,'L'+n));
+        cell.appendChild(el('span',null,r?(r.c.done?'✓':(r.c.pEnd!=null?Math.round(r.c.pEnd)+'%':'—')):(A!=null?f1(A):'s/á')));
+        if(r&&!r.c.done&&r.c.pEnd!=null){var bb=el('div','bar');bb.style.width=Math.max(4,r.c.pEnd)+'%';cell.appendChild(bb)}
+        cell.title=l+(A!=null?' · '+f1(A)+' ha':' · sin área')+(r?(r.c.done?' · terminado el '+shortDate(r.c.end):' · avance '+(r.c.pEnd!=null?Math.round(r.c.pEnd)+'%':'sin dato')):' · sin reporte en el periodo');
+        g.appendChild(cell)});
+      card.appendChild(g);
+      if(rows.length){var sc=el('div','scroll');var t=el('table','t');var hr=el('tr');
+        [['Lote'],['ha','r'],['Estado'],['Días','r'],['Jorn./ha','r'],['ha/día','r'],['Faltan','r']].forEach(function(h){hr.appendChild(el('th',h[1]||null,h[0]))});t.appendChild(hr);
+        rows.sort(function(a,b){if(a.c.done!==b.c.done)return a.c.done?-1:1;return (b.c.pEnd||0)-(a.c.pEnd||0)});
+        rows.forEach(function(r){var tr=el('tr');var c=r.c;
+          tr.appendChild(el('td',null,'L'+r.l.split(' ')[1]));tr.appendChild(el('td','r',f1(r.A)));
+          var td=el('td',null,c.done?'✓ '+shortDate(c.end):(c.pEnd!=null?Math.round(c.pEnd)+'%':'sin %'));if(c.done)td.style.color='var(--good)';tr.appendChild(td);
+          tr.appendChild(el('td','r',String(c.nd)));
+          tr.appendChild(el('td','r',r.hpha!=null?f1(r.hpha/JORNAL):'—'));
+          tr.appendChild(el('td','r',r.hapd!=null?f2(r.hapd):'—'));
+          tr.appendChild(el('td','r',c.done?'':(r.left!=null?'≈ '+r.left+' d'+(r.est?'*':''):'—')));
+          if(!r.solid){tr.children[4].className='r muted';tr.children[5].className='r muted'}
+          if(c.start<from){tr.title='El ciclo empezó el '+shortDate(c.start)+'; días y jornales cuentan desde ahí.'}
+          t.appendChild(tr)});
+        sc.appendChild(t);card.appendChild(sc);
+        if(rows.some(function(r){return r.est})){var nt=el('p','muted','* Lote con poco avance todavía: se estima con el ritmo promedio de la labor ('+f2(hapdAvg)+' ha por día).');nt.style.cssText='font-size:12px;margin:6px 0 0';card.appendChild(nt)}}
+      if(f.farm&&hpha&&TOT-doneHa>0.05){var rest=TOT-eqHa;var p=el('p','fore');p.textContent='Para cubrir el resto de la finca ('+f1(rest)+' ha) faltan ≈ '+fmt(rest*hpha/JORNAL)+' jornales al ritmo registrado.';card.appendChild(p)}
+      if(other>=1){var o=el('p','muted','Además '+fmt(other)+' h-p fuera de lotes (calles, rondas, otras áreas).');o.style.cssText='font-size:12px;margin:8px 0 0';card.appendChild(o)}
+      box.appendChild(card)});
+    if(!box.children.length)box.appendChild(el('p','muted','No hay labores con avance por lote en este periodo.'));
+    renderPace(pace);
+  }
+  function renderPace(pace){
+    var T=document.getElementById('wkPace');T.textContent='';
+    var hr=el('tr');[['Labor'],['ha avanzadas','r'],['Jornales','r'],['Jornales por ha','r'],['ha por jornal','r'],['Lote más rápido'],['Lote más lento']].forEach(function(h){hr.appendChild(el('th',h[1]||null,h[0]))});T.appendChild(hr);
+    pace.filter(function(x){return x.hpha}).sort(function(a,b){return b.adv-a.adv}).forEach(function(x){
+      var tr=el('tr');tr.appendChild(el('td',null,x.f.n));
+      tr.appendChild(el('td','r',f1(x.adv)));tr.appendChild(el('td','r',fmt(x.ph/JORNAL)));
+      tr.appendChild(el('td','r',f1(x.hpha/JORNAL)));tr.appendChild(el('td','r',f2(JORNAL/x.hpha)));
+      var rs=x.rows.slice().sort(function(a,b){return a.hpha-b.hpha});
+      function lab(r){return r?r.l+' ('+f1(r.hpha/JORNAL)+' jorn./ha)':'—'}
+      tr.appendChild(el('td',null,rs.length>1?lab(rs[0]):'—'));tr.appendChild(el('td',null,rs.length>1?lab(rs[rs.length-1]):'—'));
+      T.appendChild(tr)});
+    if(T.children.length<2){var tr2=el('tr');var td=el('td','muted','Sin datos suficientes.');td.colSpan=7;tr2.appendChild(td);T.appendChild(tr2)}
+  }
+  function renderWeek(w){
+    curWeek=w; var W=WK[w], P=prevAvg(w,8), P1=prevAvg(w,1);
+    document.getElementById('wkTitle').textContent=(isCurrent(w)?'Esta semana · ':'Semana del ')+weekLabel(w);
+    document.getElementById('wkSelect').value=w;
+    var i=WEEKS.indexOf(w);
+    document.getElementById('wkPrev').disabled=i<=0; document.getElementById('wkNext').disabled=i>=WEEKS.length-1;
+
+    // brief
+    var B=document.getElementById('wkBrief'); B.textContent='';
+    var br=BRIEFS[w], auto=autoBrief(W,P);
+    B.appendChild(el('div','src',br?'Informe semanal':'Resumen automático'));
+    if(br&&br.title){var t=el('h3',null,br.title);t.style.cssText='font-family:var(--f-display);font-size:20px;text-transform:none;letter-spacing:0;color:var(--fg);margin:6px 0 8px';B.appendChild(t)}
+    B.appendChild(el('p',null,br?br.summary:auto.summary));
+    var dd=Object.keys(W.days).filter(function(d){return DAILY_DAYS[d]}).sort();
+    if(dd.length){var n=el('p','muted','Incluye '+dd.map(function(d){return shortDate(d)}).join(', ')+' desde los reportes diarios de Odoo.');n.style.fontSize='14px';B.appendChild(n)}
+    var bl=br?(br.bullets||[]):auto.bullets;
+    if(bl.length){var ul=el('ul');bl.forEach(function(x){ul.appendChild(el('li',null,x))});B.appendChild(ul)}
+    if(br&&br.flags&&br.flags.length){var fl=el('div','flags');fl.style.marginTop='12px';br.flags.forEach(function(f){var x=el('div','flag'+(f.level==='crit'?' crit':''));x.appendChild(el('span','lvl',f.level==='crit'?'Urgente':'Atención'));x.appendChild(el('span',null,f.text));fl.appendChild(x)});B.appendChild(fl)}
+
+    // kpis
+    var K=document.getElementById('wkKpis'); K.textContent='';
+    function kpi(v,k,cur,prev,unit){var c=el('div','kpi');c.appendChild(el('div','v',v));c.appendChild(el('div','k',k));
+      if(prev!=null&&cur!=null&&prev>0){var d=Math.round((cur-prev)/prev*100);var dd=el('div','d '+(d>0?'up':d<0?'down':''),(d>0?'▲ ':d<0?'▼ ':'')+Math.abs(d)+'% vs. semana anterior');c.appendChild(dd)}
+      else c.appendChild(el('div','d',unit||' '));K.appendChild(c)}
+    var pW=P1?WK[WEEKS[i-1]]:null;
+    var cur=isCurrent(w);
+    kpi(fmt(W.ph),'horas-persona',W.ph,!cur&&pW&&pW.acts.length?pW.ph:null,cur?'semana en curso':null);
+    kpi(String(Object.keys(W.days).length),'días con reporte',null,null,'lunes a domingo');
+    var aw=avgWorkers(W); kpi(aw?aw.toFixed(1):'—','trabajadores por día',aw,pW?avgWorkers(pW):null,aw?'':'no se registra en Odoo');
+    kpi(String(W.acts.length),'labores registradas',W.acts.length,!cur&&pW&&pW.acts.length?pW.acts.length:null,cur?'semana en curso':null);
+
+    // category bars
+    var C=document.getElementById('wkCats'); C.textContent='';
+    var max=Math.max.apply(null,W.byG.concat(P?P.byG:[]).concat([1]));
+    GROUPS.forEach(function(g,j){
+      var v=W.byG[j], a=P?P.byG[j]:null; if(!v&&!a)return;
+      var row=el('div','hbar');
+      var nm=el('div','nm');var ic=el('i');ic.style.background=g.c;nm.appendChild(ic);nm.appendChild(document.createTextNode(g.n));
+      var tr=el('div','track');var f=el('div','fill');f.style.width=(v/max*100)+'%';f.style.background=g.c;tr.appendChild(f);
+      if(a!=null){var m=el('div','avg');m.style.left='calc('+(a/max*100)+'% - 1px)';tr.appendChild(m)}
+      row.appendChild(nm);row.appendChild(tr);row.appendChild(el('div','val',fmt(v)));
+      row.addEventListener('mousemove',function(e){showTip(e,'<b>'+esc(g.n)+'</b><div class="row"><span>Esta semana</span><span>'+fmt(v)+' h-p</span></div>'+(a!=null?'<div class="row"><span>Promedio 8 sem.</span><span>'+fmt(a)+' h-p</span></div>':'')+'<div class="row"><span>≈ jornales (8 h)</span><span>'+(v/8).toFixed(1)+'</span></div>')});
+      row.addEventListener('mouseleave',hideTip);
+      C.appendChild(row);
+    });
+    if(!W.acts.length) C.appendChild(el('p','muted','Sin datos.'));
+
+    // lots table
+    var T=document.getElementById('wkLots'); T.textContent='';
+    var lots=Object.keys(W.lots).sort(function(a,b){return W.lots[b].ph-W.lots[a].ph});
+    var thead=el('tr');['Lugar','Horas-persona','Labor principal'].forEach(function(h,k){var th=el('th',k===1?'r':null,h);thead.appendChild(th)});T.appendChild(thead);
+    var lmax=lots.length?W.lots[lots[0]].ph:1;
+    lots.slice(0,14).forEach(function(l){var L=W.lots[l];var tr=el('tr');tr.appendChild(el('td',null,l));
+      var td=el('td','r');var b=el('span','inl');b.style.width=Math.max(2,L.ph/lmax*70)+'px';td.appendChild(b);td.appendChild(document.createTextNode(fmt(L.ph)));tr.appendChild(td);
+      var gi=L.byG.indexOf(Math.max.apply(null,L.byG));tr.appendChild(el('td',null,GROUPS[gi].n));T.appendChild(tr)});
+    if(lots.length>14){var tr=el('tr');var td=el('td','muted','y '+(lots.length-14)+' lugares más');td.colSpan=3;tr.appendChild(td);T.appendChild(tr)}
+    if(!lots.length){var tr2=el('tr');var td2=el('td','muted','Sin datos.');td2.colSpan=3;tr2.appendChild(td2);T.appendChild(tr2)}
+
+    // day-by-day stacked bars
+    renderDays(W);
+    renderFronts(w);
+
+    // activities table
+    var A=document.getElementById('wkActs'); A.textContent='';
+    document.getElementById('wkActsTitle').textContent='Labores de la semana ('+W.acts.length+')';
+    var hr=el('tr');['Día','Labor','Descripción','Lugar','Personas','Horas','H-P'].forEach(function(h,k){hr.appendChild(el('th',k>=4?'r':null,h))});A.appendChild(hr);
+    W.acts.slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:a.g.i-b.g.i}).forEach(function(a){
+      var tr=el('tr');var x=parse(a.date);
+      tr.appendChild(el('td','num',DIAS_C[x.getDay()]+' '+x.getDate()));
+      var tc=el('td');var p=el('span','pill',a.category);tc.appendChild(p);tr.appendChild(tc);
+      var dc=el('td',null,a.description||'');if(a.flags){dc.appendChild(document.createTextNode(' '));dc.appendChild(el('span','pill warn',a.flags))}
+      if(a.progress!=null){dc.appendChild(el('div','muted','Avance '+a.progress+'%'+(a.finished?' · terminada':'')))}
+      tr.appendChild(dc);
+      tr.appendChild(el('td',null,(a.places||'').replace(/; /g,', ')));
+      tr.appendChild(el('td','r',a.people==null?'—':String(a.people)));
+      tr.appendChild(el('td','r',a.hours==null?'—':String(a.hours)));
+      tr.appendChild(el('td','r',a.person_hours==null?'—':fmt(a.person_hours)));
+      A.appendChild(tr);
+    });
+  }
+
+  function legend(id){var L=document.getElementById(id);L.textContent='';GROUPS.forEach(function(g){var s=el('span');var i=el('i');i.style.background=g.c;s.appendChild(i);s.appendChild(document.createTextNode(g.n));L.appendChild(s)})}
+
+  function stackedBars(container,cols,opts){
+    // cols: [{key,label,byG,total,sel}]
+    container.textContent='';
+    var Wd=Math.max(640,cols.length*(opts.minBar||22)), Hh=opts.h||220, m={l:44,r:8,t:10,b:28};
+    var svg=sv('svg',{class:'chart',viewBox:'0 0 '+Wd+' '+Hh,role:'img','aria-label':opts.aria});
+    var max=Math.max.apply(null,cols.map(function(c){return c.total}).concat([1]));
+    var step=niceStep(max/4), top=Math.ceil(max/step)*step;
+    var ih=Hh-m.t-m.b, iw=Wd-m.l-m.r, bw=iw/cols.length, gap=Math.max(2,bw*0.22);
+    for(var v=0;v<=top;v+=step){var y=m.t+ih-(v/top)*ih;svg.appendChild(sv('line',{class:v===0?'ax':'gl',x1:m.l,x2:Wd-m.r,y1:y,y2:y}));var t=sv('text',{x:m.l-6,y:y+4,'text-anchor':'end'});t.textContent=fmt(v);svg.appendChild(t)}
+    var every=Math.ceil(cols.length/(opts.maxLabels||14));
+    cols.forEach(function(c,i){
+      var x=m.l+i*bw;
+      if(c.sel){svg.appendChild(sv('rect',{class:'sel',x:x,y:m.t,width:bw,height:ih,rx:3}))}
+      var y=m.t+ih, gEl=sv('g',{});
+      var lastIdx=-1; c.byG.forEach(function(v,j){if(v>0)lastIdx=j});
+      c.byG.forEach(function(v,j){if(!v)return;var h=v/top*ih;var segH=Math.max(0,h-(j===lastIdx?0:2));
+        var r=sv('rect',{x:x+gap/2,y:y-h,width:Math.max(1,bw-gap),height:segH,fill:GROUPS[j].c});
+        if(j===lastIdx){r.setAttribute('rx',Math.min(4,(bw-gap)/2))}
+        gEl.appendChild(r);y-=h});
+      svg.appendChild(gEl);
+      if(i%every===0){var t=sv('text',{x:x+bw/2,y:Hh-8,'text-anchor':'middle'});t.textContent=c.label;svg.appendChild(t)}
+      var hit=sv('rect',{x:x,y:m.t,width:bw,height:ih,fill:'transparent',style:'cursor:'+(opts.onClick?'pointer':'default')});
+      hit.addEventListener('mousemove',function(e){var html='<b>'+esc(c.title||c.label)+'</b><div class="row"><span>Total</span><span>'+fmt(c.total)+' h-p</span></div>';
+        GROUPS.forEach(function(g,j){if(c.byG[j]>0)html+='<div class="row"><span><i style="background:'+g.c+'"></i>'+esc(g.n)+'</span><span>'+fmt(c.byG[j])+'</span></div>'});
+        if(!c.total)html+='<div class="muted">Sin reportes</div>';showTip(e,html)});
+      hit.addEventListener('mouseleave',hideTip);
+      if(opts.onClick)hit.addEventListener('click',function(){hideTip();opts.onClick(c)});
+      svg.appendChild(hit);
+    });
+    container.appendChild(svg);
+  }
+  function niceStep(x){var p=Math.pow(10,Math.floor(Math.log10(Math.max(x,1))));var n=x/p;return (n<=1?1:n<=2?2:n<=5?5:10)*p}
+
+  function renderDays(W){
+    legend('wkDayLegend');
+    var cols=[];for(var k=0;k<6;k++){var d=addDays(W.week,k);var byG=new Array(8).fill(0),tot=0;W.acts.forEach(function(a){if(a.date===d){byG[a.g.i]+=a.person_hours||0;tot+=a.person_hours||0}});var x=parse(d);cols.push({label:DIAS_C[x.getDay()]+' '+x.getDate(),title:longDate(d),byG:byG,total:tot})}
+    stackedBars(document.getElementById('wkDays'),cols,{h:200,minBar:90,aria:'Horas-persona por día de la semana, apiladas por labor'});
+  }
+
+  function renderHistory(){
+    legend('hLegend');
+    var cols=WEEKS.map(function(w){var W=WK[w];var a=parse(w);return{key:w,label:a.getDate()+' '+MESES[a.getMonth()],title:'Semana del '+weekLabel(w),byG:W.byG,total:W.ph,sel:w===curWeek}});
+    stackedBars(document.getElementById('hWeeks'),cols,{h:240,minBar:11,maxLabels:16,aria:'Horas-persona por semana, apiladas por labor',onClick:function(c){renderWeek(c.key);window.openTab('semana');window.scrollTo({top:0,behavior:'smooth'})}});
+    renderHeat(); renderMonths();
+    var gaps=WEEKS.filter(function(w){return !WK[w].acts.length}).length;
+    document.getElementById('hNote').textContent=ACTS.length.toLocaleString('es-CR')+' labores registradas entre '+shortDate(ACTS[0].date)+' '+ACTS[0].date.slice(0,4)+' y '+shortDate(ACTS[ACTS.length-1].date)+' '+ACTS[ACTS.length-1].date.slice(0,4)+'.'+(gaps?' '+gaps+' semanas sin reportes cargados.':'');
+  }
+
+  function renderHeat(){
+    var months=+document.getElementById('hRange').value;
+    var last=ACTS[ACTS.length-1].date, from='0000';
+    if(months){var x=parse(last);x.setMonth(x.getMonth()-months);from=iso(x)}
+    var M={};ACTS.forEach(function(a){if(a.date<from)return;var ph=a.person_hours||0;var places=a.lots.length?a.lots:['Sin lugar'];places.forEach(function(p){if(!/^Lote \d+$/.test(p))p='Otras áreas';var r=M[p]||(M[p]=new Array(8).fill(0));r[a.g.i]+=ph/places.length})});
+    var rows=Object.keys(M).sort(function(a,b){var na=/^Lote/.test(a)?+a.split(' ')[1]:999,nb=/^Lote/.test(b)?+b.split(' ')[1]:999;return na-nb});
+    var T=document.getElementById('hHeat');T.textContent='';
+    var hr=el('tr');hr.appendChild(el('th',null,'Lugar'));GROUPS.forEach(function(g){var th=el('th','r',g.n);th.style.whiteSpace='normal';th.style.minWidth='70px';hr.appendChild(th)});hr.appendChild(el('th','r','Total'));T.appendChild(hr);
+    var max=0;rows.forEach(function(r){if(r==='Otras áreas')return;M[r].forEach(function(v){if(v>max)max=v})});
+    var rgb=getComputedStyle(document.documentElement).getPropertyValue('--heat').trim()||'42,120,214';
+    rows.forEach(function(r){var tr=el('tr');tr.appendChild(el('td',null,r));var tot=0;
+      M[r].forEach(function(v,j){tot+=v;var td=el('td','c',v>=1?fmt(v):'');var a=r==='Otras áreas'?0:Math.min(1,v/max);
+        if(v>=1&&r!=='Otras áreas'){td.style.background='rgba('+rgb+','+(0.08+a*0.82).toFixed(2)+')';if(a>0.55)td.style.color='#fff'}
+        td.addEventListener('mousemove',function(e){showTip(e,'<b>'+esc(r)+' · '+esc(GROUPS[j].n)+'</b><div class="row"><span>Horas-persona</span><span>'+fmt(v)+'</span></div><div class="row"><span>≈ jornales</span><span>'+(v/8).toFixed(1)+'</span></div>')});
+        td.addEventListener('mouseleave',hideTip);tr.appendChild(td)});
+      var tt=el('td','r',fmt(tot));tt.style.fontWeight='600';tr.appendChild(tt);T.appendChild(tr)});
+  }
+  document.getElementById('hRange').addEventListener('change',renderHeat);
+
+  function renderMonths(){
+    var M={};ACTS.forEach(function(a){var k=a.date.slice(0,7);var r=M[k]||(M[k]={byG:new Array(8).fill(0),days:{},n:0});r.byG[a.g.i]+=a.person_hours||0;r.days[a.date]=1;r.n++});
+    var T=document.getElementById('hMonths');T.textContent='';
+    var hr=el('tr');hr.appendChild(el('th',null,'Mes'));hr.appendChild(el('th','r','Días'));GROUPS.forEach(function(g){var th=el('th','r');var i=el('i');i.style.cssText='display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;background:'+g.c;th.appendChild(i);th.appendChild(document.createTextNode(g.n));th.style.whiteSpace='normal';th.style.minWidth='76px';hr.appendChild(th)});hr.appendChild(el('th','r','Total'));T.appendChild(hr);
+    Object.keys(M).sort().reverse().forEach(function(k){var r=M[k];var tr=el('tr');var p=k.split('-');tr.appendChild(el('td','num',MESES[+p[1]-1]+' '+p[0]));tr.appendChild(el('td','r',String(Object.keys(r.days).length)));var tot=0;r.byG.forEach(function(v){tot+=v;tr.appendChild(el('td','r',v>=1?fmt(v):'—'))});var tt=el('td','r',fmt(tot));tt.style.fontWeight='600';tr.appendChild(tt);T.appendChild(tr)});
+  }
+
+  window.addEventListener('tabopen',function(e){if(e.detail==='historico'&&H){renderHistory()}});
+  load();
+})();
+</script>
+
+</body></html>
